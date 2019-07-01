@@ -69,11 +69,11 @@ type TopicSpec struct {
 	// Topic is the ID of the Topic to create/use in Google Cloud Pub/Sub.
 	Topic string `json:"topic,omitempty"`
 
-	//PropagationPolicy defines how Topic controls the Cloud Pub/Sub topic for
+	// PropagationPolicy defines how Topic controls the Cloud Pub/Sub topic for
 	// lifecycle changes. Defaults to TopicPolicyCreateNoDelete if empty.
 	PropagationPolicy PropagationPolicyType `json:"propagationPolicy,omitempty"`
 
-	// ServiceAccountName is the name of the ServiceAccount that will be used to
+	// ServiceAccountName is the name of the Kubernetes ServiceAccount that will be used to
 	// run the Topic Deployment.
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
