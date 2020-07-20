@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -15,13 +16,18 @@ var (
 )
 
 func main() {
-	_, s := makeSchema2(reflect.TypeOf(v1.Topic{}))
+	s := makeTopSchema(reflect.TypeOf(v1.Topic{}))
 	//fmt.Printf("%+v", s)
 	b, _ := yaml.Marshal(s)
 	fmt.Print(string(b))
 }
 
-func makeSchema2(t reflect.Type) (bool, JSONSchemaProps) {
+func makeTopSchema(t reflect.Type) JSONSchemaProps {
+	s := makeSchemaStruct(t, true)
+	return s
+}
+
+func makeSchema(t reflect.Type) (bool, JSONSchemaProps) {
 	switch k := t.Kind(); k {
 	case reflect.Bool:
 		return true, JSONSchemaProps{
@@ -94,18 +100,18 @@ func makeSchema2(t reflect.Type) (bool, JSONSchemaProps) {
 			Format: "float64",
 		}
 	case reflect.Map:
-		return true, makeSchemaMap2(t)
+		return true, makeSchemaMap(t)
 	case reflect.Ptr:
-		_, s := makeSchema2(t.Elem())
+		_, s := makeSchema(t.Elem())
 		return false, s
 	case reflect.Slice:
-		return true, makeSchemaSlice2(t)
+		return true, makeSchemaSlice(t)
 	case reflect.String:
 		return true, JSONSchemaProps{
 			Type: "string",
 		}
 	case reflect.Struct:
-		return true, makeSchemaStruct2(t)
+		return true, makeSchemaStruct(t, false)
 	case reflect.Complex64:
 		fallthrough
 	case reflect.Complex128:
@@ -125,15 +131,20 @@ func makeSchema2(t reflect.Type) (bool, JSONSchemaProps) {
 	}
 }
 
-func makeSchemaStruct2(t reflect.Type) JSONSchemaProps {
+var topLevelFieldsToSkip = map[string]struct{}{
+	"TypeMeta":   {},
+	"ObjectMeta": {},
+}
+
+func makeSchemaStruct(t reflect.Type, skipTopLevelCommon bool) JSONSchemaProps {
 	s := JSONSchemaProps{
 		Type:       "object",
 		Properties: map[string]JSONSchemaProps{},
 	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
-		if f.Anonymous {
-			//continue
+		if _, skip := topLevelFieldsToSkip[f.Name]; skip && skipTopLevelCommon {
+			continue
 		}
 		name := f.Name
 		jsonKey, present := f.Tag.Lookup("json")
@@ -143,16 +154,32 @@ func makeSchemaStruct2(t reflect.Type) JSONSchemaProps {
 				name = split[0]
 			}
 		}
-		required, fs := makeSchema2(f.Type)
-		s.Properties[name] = fs
-		if required {
-			s.Required = append(s.Required, name)
+
+		required, fs := makeSchema(f.Type)
+
+		if selfJSONMarshaler(f.Type) {
+			// The field marshals itself. Let's pretend it is a string.
+			fs = JSONSchemaProps{
+				Type: "string",
+			}
+		}
+
+		if f.Anonymous {
+			for n, p := range fs.Properties {
+				s.Properties[n] = p
+			}
+			s.Required = append(s.Required, fs.Required...)
+		} else {
+			s.Properties[name] = fs
+			if required {
+				s.Required = append(s.Required, name)
+			}
 		}
 	}
 	return s
 }
 
-func makeSchemaMap2(t reflect.Type) JSONSchemaProps {
+func makeSchemaMap(t reflect.Type) JSONSchemaProps {
 	if t.Key().Kind() != reflect.String {
 		panic(fmt.Errorf("can't handle a non-string key: %+v", t))
 	}
@@ -162,15 +189,24 @@ func makeSchemaMap2(t reflect.Type) JSONSchemaProps {
 	}
 }
 
-func makeSchemaSlice2(t reflect.Type) JSONSchemaProps {
+func makeSchemaSlice(t reflect.Type) JSONSchemaProps {
 	s := JSONSchemaProps{
 		Type: "array",
 	}
-	_, is := makeSchema2(t.Elem())
+	_, is := makeSchema(t.Elem())
 	s.Items = &JSONSchemaPropsOrArray{
-		JSONSchemas: []JSONSchemaProps{is},
+		Schema: &is,
 	}
 	return s
+}
+
+func selfJSONMarshaler(t reflect.Type) bool {
+	jm := reflect.TypeOf((*json.Marshaler)(nil)).Elem()
+	ju := reflect.TypeOf((*json.Unmarshaler)(nil)).Elem()
+	if !t.Implements(jm) && !reflect.PtrTo(t).Implements(jm) {
+		return false
+	}
+	return t.Implements(ju) || reflect.PtrTo(t).Implements(ju)
 }
 
 // JSONSchemaProps is a JSON-Schema following Specification Draft 4 (http://json-schema.org/).
@@ -286,7 +322,7 @@ type JSONSchemaURL string
 // JSONSchemaPropsOrArray represents a value that can either be a JSONSchemaProps
 // or an array of JSONSchemaProps. Mainly here for serialization purposes.
 type JSONSchemaPropsOrArray struct {
-	Schema      *JSONSchemaProps  `yaml:",omitempty"`
+	Schema      *JSONSchemaProps  `yaml:",inline,omitempty"`
 	JSONSchemas []JSONSchemaProps `yaml:",omitempty"`
 }
 
