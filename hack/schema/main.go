@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/google/knative-gcp/pkg/apis/intevents/v1alpha1"
+
 	"gopkg.in/yaml.v3"
 
 	v1 "github.com/google/knative-gcp/pkg/apis/intevents/v1"
@@ -22,12 +24,8 @@ var (
 
 func main() {
 	t := reflect.TypeOf(v1.Topic{})
+	t = reflect.TypeOf(v1alpha1.BrokerCell{})
 	s := makeTopSchema(t)
-	err := GetDocs(t, &s)
-	if err != nil {
-		fmt.Println("error: ", err)
-	}
-	//fmt.Printf("%+v", s)
 	b, _ := yaml.Marshal(s)
 	fmt.Print(string(b))
 }
@@ -38,111 +36,91 @@ func makeTopSchema(t reflect.Type) JSONSchemaProps {
 }
 
 func makeSchema(t reflect.Type) (bool, JSONSchemaProps) {
-	doc := ""
 	switch k := t.Kind(); k {
 	case reflect.Bool:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "boolean",
+			Type: "boolean",
 		}
 	case reflect.Int:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "int32",
+			Type:   "integer",
+			Format: "int32",
 		}
 	case reflect.Int8:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "int8",
+			Type:   "integer",
+			Format: "int8",
 		}
 	case reflect.Int16:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "int16",
+			Type:   "integer",
+			Format: "int16",
 		}
 	case reflect.Int32:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "int32",
+			Type:   "integer",
+			Format: "int32",
 		}
 	case reflect.Int64:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "int64",
+			Type:   "integer",
+			Format: "int64",
 		}
 	case reflect.Uint:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "uint32",
+			Type:   "integer",
+			Format: "uint32",
 		}
 	case reflect.Uint8:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "uint8",
+			Type:   "integer",
+			Format: "uint8",
 		}
 	case reflect.Uint16:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "uint16",
+			Type:   "integer",
+			Format: "uint16",
 		}
 	case reflect.Uint32:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "uint32",
+			Type:   "integer",
+			Format: "uint32",
 		}
 	case reflect.Uint64:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "uint64",
+			Type:   "integer",
+			Format: "uint64",
 		}
 	case reflect.Uintptr:
 		return false, JSONSchemaProps{
-			Description: doc,
-			Type:        "integer",
-			Format:      "uint32",
+			Type:   "integer",
+			Format: "uint32",
 		}
 	case reflect.Float32:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "float",
-			Format:      "float32",
+			Type:   "float",
+			Format: "float32",
 		}
 	case reflect.Float64:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "float",
-			Format:      "float64",
+			Type:   "float",
+			Format: "float64",
 		}
 	case reflect.Map:
 		s := makeSchemaMap(t)
-		s.Description = doc
 		return true, s
 	case reflect.Ptr:
 		_, s := makeSchema(t.Elem())
-		s.Description = doc
 		return false, s
 	case reflect.Slice:
 		s := makeSchemaSlice(t)
-		s.Description = doc
 		return true, s
 	case reflect.String:
 		return true, JSONSchemaProps{
-			Description: doc,
-			Type:        "string",
+			Type: "string",
 		}
 	case reflect.Struct:
 		s := makeSchemaStruct(t, false)
-		s.Description = doc
 		return true, s
 	case reflect.Complex64:
 		fallthrough
@@ -400,68 +378,6 @@ type ExternalDocumentation struct {
 
 // Docs
 
-func GetDocs(t reflect.Type, props *JSONSchemaProps) error {
-	p, err := makeParserMapForPackage(t.PkgPath())
-	pkg := t.PkgPath()
-	fmt.Println("package: ", pkg)
-	//fs := token.NewFileSet()
-	//p, err := parser.ParseDir(fs, pkg, nil, parser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("unable to parse dir: %w", err)
-	}
-	ap, present := p[pkg]
-	if !present {
-		return fmt.Errorf("package not present: %q", pkg)
-	}
-	dp := doc.New(ap, pkg, 0)
-	for _, dt := range dp.Types {
-		sp, present := props.Properties[dt.Name]
-		if !present {
-			fmt.Println("Did not find ", dt.Name)
-			continue
-		}
-		sp.Description = dt.Doc
-	}
-	return nil
-}
-
-func makeParserMap() (map[string]*ast.Package, error) {
-	fs := token.NewFileSet()
-	pList := []string{"./"}
-	pm := map[string]*ast.Package{}
-	for len(pList) > 0 {
-		current := pList[0]
-		pList = pList[1:]
-		spm, err := parser.ParseDir(fs, current, ignoreDirectories, parser.ParseComments)
-		if err != nil {
-			return pm, fmt.Errorf("error parse dir %q: %w", current, err)
-		}
-		for _, v := range spm {
-			name := fmt.Sprintf("%s/%s", "github.com/google/knative-gcp", current[2:])
-			name = strings.Replace(name, "github.com/google/knative-gcp/vendor/", "", 1)
-			pm[name] = v
-		}
-		fd, err := os.Open(current)
-		if err != nil {
-			return pm, fmt.Errorf("can't open: %w", err)
-		}
-		l, err := fd.Readdir(-1)
-		if err != nil {
-			return pm, fmt.Errorf("can't readdir: %w", err)
-		}
-		for _, f := range l {
-			if f.IsDir() {
-				pList = append(pList, fmt.Sprintf("%s/%s", current, f.Name()))
-			}
-		}
-		err = fd.Close()
-		if err != nil {
-			return pm, fmt.Errorf("can't close: %w", err)
-		}
-	}
-	return pm, nil
-}
-
 func ignoreDirectories(fi os.FileInfo) bool {
 	return !fi.IsDir()
 }
@@ -477,7 +393,6 @@ func makeParserMapForPackage(pkg string) (map[string]*ast.Package, error) {
 	pm := map[string]*ast.Package{}
 	for len(pList) > 0 {
 		current := pList[0]
-		fmt.Println("current", current)
 		pList = pList[1:]
 		if !strings.HasPrefix(current, "github.com/google/knative-gcp") &&
 			!strings.HasPrefix(current, ".") &&
@@ -530,7 +445,6 @@ const (
 func getDocs2(t reflect.Type, fieldName string) (string, openAPIRequired, error) {
 	p, err := makeParserMapForPackage(t.PkgPath())
 	pkg := t.PkgPath()
-	fmt.Println("package: ", pkg)
 	//fs := token.NewFileSet()
 	//p, err := parser.ParseDir(fs, pkg, nil, parser.ParseComments)
 	if err != nil {
@@ -566,27 +480,11 @@ func getDocs2(t reflect.Type, fieldName string) (string, openAPIRequired, error)
 	return "", unknown, fmt.Errorf("did not find doc for %q", t.Name())
 }
 
-func docSaysRequired(f *ast.Field) openAPIRequired {
-	if f.Doc == nil {
-		return unknown
-	}
-	for _, l := range f.Doc.List {
-		line := strings.ToLower(l.Text)
-		if strings.Contains(line, "+optional") {
-			return optional
-		}
-		if strings.Contains(line, "+required") {
-			return required
-		}
-	}
-	return unknown
-}
-
 func docs(f *ast.Field) (string, openAPIRequired) {
 	if f.Doc == nil {
 		return "", unknown
 	}
-	lines := []string{}
+	var lines []string
 	docSaysRequired := unknown
 	for _, line := range f.Doc.List {
 		l := strings.TrimPrefix(line.Text, "// ")
