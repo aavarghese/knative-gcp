@@ -11,8 +11,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/google/knative-gcp/pkg/apis/intevents/v1alpha1"
-
 	"gopkg.in/yaml.v3"
 
 	v1 "github.com/google/knative-gcp/pkg/apis/intevents/v1"
@@ -24,7 +22,7 @@ var (
 
 func main() {
 	t := reflect.TypeOf(v1.Topic{})
-	t = reflect.TypeOf(v1alpha1.BrokerCell{})
+	//t = reflect.TypeOf(v1alpha1.BrokerCell{})
 	s := makeTopSchema(t)
 	b, _ := yaml.Marshal(s)
 	fmt.Print(string(b))
@@ -382,18 +380,17 @@ func ignoreDirectories(fi os.FileInfo) bool {
 	return !fi.IsDir()
 }
 
-var parserMapCache = map[string]map[string]*ast.Package{}
+var parserMapCache = map[string]*ast.Package{}
 
 func makeParserMapForPackage(pkg string) (map[string]*ast.Package, error) {
-	if v, ok := parserMapCache[pkg]; ok {
-		return v, nil
-	}
 	fs := token.NewFileSet()
 	pList := []string{strings.Replace(pkg, "github.com/google/knative-gcp", ".", 1)}
-	pm := map[string]*ast.Package{}
 	for len(pList) > 0 {
 		current := pList[0]
 		pList = pList[1:]
+		if _, ok := parserMapCache[current]; ok {
+			continue
+		}
 		if !strings.HasPrefix(current, "github.com/google/knative-gcp") &&
 			!strings.HasPrefix(current, ".") &&
 			!strings.HasPrefix(current, "vendor/") {
@@ -401,7 +398,7 @@ func makeParserMapForPackage(pkg string) (map[string]*ast.Package, error) {
 		}
 		spm, err := parser.ParseDir(fs, current, ignoreDirectories, parser.ParseComments)
 		if err != nil {
-			return pm, fmt.Errorf("error parse dir %q: %w", current, err)
+			return parserMapCache, fmt.Errorf("error parse dir %q: %w", current, err)
 		}
 		for _, v := range spm {
 			localName := current
@@ -410,15 +407,15 @@ func makeParserMapForPackage(pkg string) (map[string]*ast.Package, error) {
 			}
 			name := fmt.Sprintf("%s/%s", "github.com/google/knative-gcp", localName)
 			name = strings.Replace(name, "github.com/google/knative-gcp/vendor/", "", 1)
-			pm[name] = v
+			parserMapCache[name] = v
 		}
 		fd, err := os.Open(current)
 		if err != nil {
-			return pm, fmt.Errorf("can't open: %w", err)
+			return parserMapCache, fmt.Errorf("can't open: %w", err)
 		}
 		l, err := fd.Readdir(-1)
 		if err != nil {
-			return pm, fmt.Errorf("can't readdir: %w", err)
+			return parserMapCache, fmt.Errorf("can't readdir: %w", err)
 		}
 		for _, f := range l {
 			if f.IsDir() {
@@ -427,11 +424,10 @@ func makeParserMapForPackage(pkg string) (map[string]*ast.Package, error) {
 		}
 		err = fd.Close()
 		if err != nil {
-			return pm, fmt.Errorf("can't close: %w", err)
+			return parserMapCache, fmt.Errorf("can't close: %w", err)
 		}
 	}
-	parserMapCache[pkg] = pm
-	return pm, nil
+	return parserMapCache, nil
 }
 
 type openAPIRequired int
