@@ -3,6 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/doc"
+	"go/parser"
+	"go/token"
+	"os"
 	"reflect"
 	"strings"
 
@@ -16,7 +21,12 @@ var (
 )
 
 func main() {
-	s := makeTopSchema(reflect.TypeOf(v1.Topic{}))
+	t := reflect.TypeOf(v1.Topic{})
+	s := makeTopSchema(t)
+	err := GetDocs(t, &s)
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
 	//fmt.Printf("%+v", s)
 	b, _ := yaml.Marshal(s)
 	fmt.Print(string(b))
@@ -28,90 +38,112 @@ func makeTopSchema(t reflect.Type) JSONSchemaProps {
 }
 
 func makeSchema(t reflect.Type) (bool, JSONSchemaProps) {
+	doc := ""
 	switch k := t.Kind(); k {
 	case reflect.Bool:
 		return true, JSONSchemaProps{
-			Description: "fill me in",
+			Description: doc,
 			Type:        "boolean",
 		}
 	case reflect.Int:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "int32",
+			Description: doc,
+			Type:        "integer",
+			Format:      "int32",
 		}
 	case reflect.Int8:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "int8",
+			Description: doc,
+			Type:        "integer",
+			Format:      "int8",
 		}
 	case reflect.Int16:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "int16",
+			Description: doc,
+			Type:        "integer",
+			Format:      "int16",
 		}
 	case reflect.Int32:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "int32",
+			Description: doc,
+			Type:        "integer",
+			Format:      "int32",
 		}
 	case reflect.Int64:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "int64",
+			Description: doc,
+			Type:        "integer",
+			Format:      "int64",
 		}
 	case reflect.Uint:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "uint32",
+			Description: doc,
+			Type:        "integer",
+			Format:      "uint32",
 		}
 	case reflect.Uint8:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "uint8",
+			Description: doc,
+			Type:        "integer",
+			Format:      "uint8",
 		}
 	case reflect.Uint16:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "uint16",
+			Description: doc,
+			Type:        "integer",
+			Format:      "uint16",
 		}
 	case reflect.Uint32:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "uint32",
+			Description: doc,
+			Type:        "integer",
+			Format:      "uint32",
 		}
 	case reflect.Uint64:
 		return true, JSONSchemaProps{
-			Type:   "integer",
-			Format: "uint64",
+			Description: doc,
+			Type:        "integer",
+			Format:      "uint64",
 		}
 	case reflect.Uintptr:
 		return false, JSONSchemaProps{
-			Type:   "integer",
-			Format: "uint32",
+			Description: doc,
+			Type:        "integer",
+			Format:      "uint32",
 		}
 	case reflect.Float32:
 		return true, JSONSchemaProps{
-			Type:   "float",
-			Format: "float32",
+			Description: doc,
+			Type:        "float",
+			Format:      "float32",
 		}
 	case reflect.Float64:
 		return true, JSONSchemaProps{
-			Type:   "float",
-			Format: "float64",
+			Description: doc,
+			Type:        "float",
+			Format:      "float64",
 		}
 	case reflect.Map:
-		return true, makeSchemaMap(t)
+		s := makeSchemaMap(t)
+		s.Description = doc
+		return true, s
 	case reflect.Ptr:
 		_, s := makeSchema(t.Elem())
+		s.Description = doc
 		return false, s
 	case reflect.Slice:
-		return true, makeSchemaSlice(t)
+		s := makeSchemaSlice(t)
+		s.Description = doc
+		return true, s
 	case reflect.String:
 		return true, JSONSchemaProps{
-			Type: "string",
+			Description: doc,
+			Type:        "string",
 		}
 	case reflect.Struct:
-		return true, makeSchemaStruct(t, false)
+		s := makeSchemaStruct(t, false)
+		s.Description = doc
+		return true, s
 	case reflect.Complex64:
 		fallthrough
 	case reflect.Complex128:
@@ -155,7 +187,7 @@ func makeSchemaStruct(t reflect.Type, skipTopLevelCommon bool) JSONSchemaProps {
 			}
 		}
 
-		required, fs := makeSchema(f.Type)
+		ptrImpliesRequired, fs := makeSchema(f.Type)
 
 		if selfJSONMarshaler(f.Type) {
 			// The field marshals itself. Let's pretend it is a string.
@@ -170,11 +202,26 @@ func makeSchemaStruct(t reflect.Type, skipTopLevelCommon bool) JSONSchemaProps {
 			}
 			s.Required = append(s.Required, fs.Required...)
 		} else {
+			// Add docs
+			doc, docSaysRequired, err := getDocs2(t, f.Name)
+			if err != nil {
+				doc = fmt.Sprintf("not found: %v", err)
+			}
+			fs.Description = doc
 			s.Properties[name] = fs
-			if required {
+			switch docSaysRequired {
+			case optional:
+				// Nothing!
+			case required:
 				s.Required = append(s.Required, name)
+			case unknown:
+				// Doc didn't say anything, check if the type is a pointer.
+				if ptrImpliesRequired {
+					s.Required = append(s.Required, name)
+				}
 			}
 		}
+
 	}
 	return s
 }
@@ -349,4 +396,218 @@ type JSONSchemaDefinitions map[string]JSONSchemaProps
 type ExternalDocumentation struct {
 	Description string
 	URL         string
+}
+
+// Docs
+
+func GetDocs(t reflect.Type, props *JSONSchemaProps) error {
+	p, err := makeParserMapForPackage(t.PkgPath())
+	pkg := t.PkgPath()
+	fmt.Println("package: ", pkg)
+	//fs := token.NewFileSet()
+	//p, err := parser.ParseDir(fs, pkg, nil, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("unable to parse dir: %w", err)
+	}
+	ap, present := p[pkg]
+	if !present {
+		return fmt.Errorf("package not present: %q", pkg)
+	}
+	dp := doc.New(ap, pkg, 0)
+	for _, dt := range dp.Types {
+		sp, present := props.Properties[dt.Name]
+		if !present {
+			fmt.Println("Did not find ", dt.Name)
+			continue
+		}
+		sp.Description = dt.Doc
+	}
+	return nil
+}
+
+func makeParserMap() (map[string]*ast.Package, error) {
+	fs := token.NewFileSet()
+	pList := []string{"./"}
+	pm := map[string]*ast.Package{}
+	for len(pList) > 0 {
+		current := pList[0]
+		pList = pList[1:]
+		spm, err := parser.ParseDir(fs, current, ignoreDirectories, parser.ParseComments)
+		if err != nil {
+			return pm, fmt.Errorf("error parse dir %q: %w", current, err)
+		}
+		for _, v := range spm {
+			name := fmt.Sprintf("%s/%s", "github.com/google/knative-gcp", current[2:])
+			name = strings.Replace(name, "github.com/google/knative-gcp/vendor/", "", 1)
+			pm[name] = v
+		}
+		fd, err := os.Open(current)
+		if err != nil {
+			return pm, fmt.Errorf("can't open: %w", err)
+		}
+		l, err := fd.Readdir(-1)
+		if err != nil {
+			return pm, fmt.Errorf("can't readdir: %w", err)
+		}
+		for _, f := range l {
+			if f.IsDir() {
+				pList = append(pList, fmt.Sprintf("%s/%s", current, f.Name()))
+			}
+		}
+		err = fd.Close()
+		if err != nil {
+			return pm, fmt.Errorf("can't close: %w", err)
+		}
+	}
+	return pm, nil
+}
+
+func ignoreDirectories(fi os.FileInfo) bool {
+	return !fi.IsDir()
+}
+
+var parserMapCache = map[string]map[string]*ast.Package{}
+
+func makeParserMapForPackage(pkg string) (map[string]*ast.Package, error) {
+	if v, ok := parserMapCache[pkg]; ok {
+		return v, nil
+	}
+	fs := token.NewFileSet()
+	pList := []string{strings.Replace(pkg, "github.com/google/knative-gcp", ".", 1)}
+	pm := map[string]*ast.Package{}
+	for len(pList) > 0 {
+		current := pList[0]
+		fmt.Println("current", current)
+		pList = pList[1:]
+		if !strings.HasPrefix(current, "github.com/google/knative-gcp") &&
+			!strings.HasPrefix(current, ".") &&
+			!strings.HasPrefix(current, "vendor/") {
+			current = "vendor/" + current
+		}
+		spm, err := parser.ParseDir(fs, current, ignoreDirectories, parser.ParseComments)
+		if err != nil {
+			return pm, fmt.Errorf("error parse dir %q: %w", current, err)
+		}
+		for _, v := range spm {
+			localName := current
+			if strings.HasPrefix(localName, "./") {
+				localName = localName[2:]
+			}
+			name := fmt.Sprintf("%s/%s", "github.com/google/knative-gcp", localName)
+			name = strings.Replace(name, "github.com/google/knative-gcp/vendor/", "", 1)
+			pm[name] = v
+		}
+		fd, err := os.Open(current)
+		if err != nil {
+			return pm, fmt.Errorf("can't open: %w", err)
+		}
+		l, err := fd.Readdir(-1)
+		if err != nil {
+			return pm, fmt.Errorf("can't readdir: %w", err)
+		}
+		for _, f := range l {
+			if f.IsDir() {
+				pList = append(pList, fmt.Sprintf("%s/%s", current, f.Name()))
+			}
+		}
+		err = fd.Close()
+		if err != nil {
+			return pm, fmt.Errorf("can't close: %w", err)
+		}
+	}
+	parserMapCache[pkg] = pm
+	return pm, nil
+}
+
+type openAPIRequired int
+
+const (
+	unknown openAPIRequired = iota
+	optional
+	required
+)
+
+func getDocs2(t reflect.Type, fieldName string) (string, openAPIRequired, error) {
+	p, err := makeParserMapForPackage(t.PkgPath())
+	pkg := t.PkgPath()
+	fmt.Println("package: ", pkg)
+	//fs := token.NewFileSet()
+	//p, err := parser.ParseDir(fs, pkg, nil, parser.ParseComments)
+	if err != nil {
+		return "", unknown, fmt.Errorf("unable to parse dir: %w", err)
+	}
+	ap, present := p[pkg]
+	if !present {
+		return "", unknown, fmt.Errorf("package not present: %q", pkg)
+	}
+	dp := doc.New(ap, pkg, 0)
+	for _, dt := range dp.Types {
+		if dt.Name == t.Name() {
+			for _, spec := range dt.Decl.Specs {
+				typeSpec, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				structType, ok := typeSpec.Type.(*ast.StructType)
+				if !ok {
+					continue
+				}
+				for _, field := range structType.Fields.List {
+					for _, name := range field.Names {
+						if fieldName == name.Name {
+							fieldDoc, isRequired := docs(field)
+							return fieldDoc, isRequired, nil
+						}
+					}
+				}
+			}
+		}
+	}
+	return "", unknown, fmt.Errorf("did not find doc for %q", t.Name())
+}
+
+func docSaysRequired(f *ast.Field) openAPIRequired {
+	if f.Doc == nil {
+		return unknown
+	}
+	for _, l := range f.Doc.List {
+		line := strings.ToLower(l.Text)
+		if strings.Contains(line, "+optional") {
+			return optional
+		}
+		if strings.Contains(line, "+required") {
+			return required
+		}
+	}
+	return unknown
+}
+
+func docs(f *ast.Field) (string, openAPIRequired) {
+	if f.Doc == nil {
+		return "", unknown
+	}
+	lines := []string{}
+	docSaysRequired := unknown
+	for _, line := range f.Doc.List {
+		l := strings.TrimPrefix(line.Text, "// ")
+		l = strings.TrimSpace(l)
+		switch strings.ToLower(l) {
+		case "+optional":
+			docSaysRequired = optional
+			continue
+		case "+required":
+			docSaysRequired = required
+			continue
+		}
+		if strings.HasPrefix(l, "+") {
+			// Not really a comment, normally alters the semantics of the field, like mergePatchKey.
+			continue
+		}
+		if strings.HasPrefix(l, "TODO") {
+			// Assume that from this forward is a TODO, not real docs.
+			break
+		}
+		lines = append(lines, l)
+	}
+	return strings.Join(lines, "\n"), docSaysRequired
 }
