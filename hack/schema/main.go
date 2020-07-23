@@ -181,7 +181,7 @@ func makeSchemaStruct(t reflect.Type, skipTopLevelCommon bool) JSONSchemaProps {
 			s.Required = append(s.Required, fs.Required...)
 		} else {
 			// Add docs
-			doc, docSaysRequired, err := getDocs2(t, f.Name)
+			doc, docSaysRequired, err := getDocs(t, f.Name)
 			if err != nil {
 				doc = fmt.Sprintf("not found: %v", err)
 			}
@@ -442,7 +442,7 @@ const (
 	required
 )
 
-func getDocs2(t reflect.Type, fieldName string) (string, openAPIRequired, error) {
+func getDocs(t reflect.Type, fieldName string) (string, openAPIRequired, error) {
 	p, err := makeParserMapForPackage(t.PkgPath())
 	pkg := t.PkgPath()
 	//fs := token.NewFileSet()
@@ -469,7 +469,7 @@ func getDocs2(t reflect.Type, fieldName string) (string, openAPIRequired, error)
 				for _, field := range structType.Fields.List {
 					for _, name := range field.Names {
 						if fieldName == name.Name {
-							fieldDoc, isRequired := docs(field)
+							fieldDoc, isRequired := parseFieldDocs(field)
 							return fieldDoc, isRequired, nil
 						}
 					}
@@ -480,7 +480,7 @@ func getDocs2(t reflect.Type, fieldName string) (string, openAPIRequired, error)
 	return "", unknown, fmt.Errorf("did not find doc for %q", t.Name())
 }
 
-func docs(f *ast.Field) (string, openAPIRequired) {
+func parseFieldDocs(f *ast.Field) (string, openAPIRequired) {
 	if f.Doc == nil {
 		return "", unknown
 	}
@@ -489,6 +489,7 @@ func docs(f *ast.Field) (string, openAPIRequired) {
 	for _, line := range f.Doc.List {
 		l := strings.TrimPrefix(line.Text, "// ")
 		l = strings.TrimSpace(l)
+		skip := false
 		switch strings.ToLower(l) {
 		case "+optional":
 			docSaysRequired = optional
@@ -503,9 +504,12 @@ func docs(f *ast.Field) (string, openAPIRequired) {
 		}
 		if strings.HasPrefix(l, "TODO") {
 			// Assume that from this forward is a TODO, not real docs.
+			skip = true
 			break
 		}
-		lines = append(lines, l)
+		if !skip {
+			lines = append(lines, l)
+		}
 	}
 	return strings.Join(lines, "\n"), docSaysRequired
 }
