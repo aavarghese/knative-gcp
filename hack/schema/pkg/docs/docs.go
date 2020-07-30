@@ -144,5 +144,5 @@ func parseFieldDocs(f *ast.Field) (string, OpenAPIRequired) {
 			lines = append(lines, l)
 		}
 	}
-	return strings.Join(lines, ""), docSaysRequired
+	return strings.Join(lines, " "), docSaysRequired
 }
