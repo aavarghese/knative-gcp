@@ -21,15 +21,18 @@ package pullsubscription
 import (
 	context "context"
 
+	"github.com/google/knative-gcp/pkg/injection"
+
+	"github.com/google/knative-gcp/pkg/apis/intevents"
+
 	v1 "github.com/google/knative-gcp/pkg/client/informers/externalversions/intevents/v1"
 	factory "github.com/google/knative-gcp/pkg/client/injection/informers/factory"
 	controller "knative.dev/pkg/controller"
-	injection "knative.dev/pkg/injection"
 	logging "knative.dev/pkg/logging"
 )
 
 func init() {
-	injection.Default.RegisterInformer(withInformer)
+	injection.Default.RegisterInformer(withInformer, intevents.PullSubscriptionsResource.String())
 }
 
 // Key is used for associating the Informer inside the context.Context.

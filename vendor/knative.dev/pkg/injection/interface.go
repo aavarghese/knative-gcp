@@ -20,6 +20,8 @@ import (
 	"context"
 	"sync"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/client-go/rest"
 
 	"knative.dev/pkg/configmap"
@@ -51,10 +53,12 @@ type Interface interface {
 
 	// RegisterInformer registers a new injector callback for associating
 	// a new informer with a context.
-	RegisterInformer(InformerInjector)
+	RegisterInformer(InformerInjector, v1.GroupVersionResource)
 
 	// GetInformers fetches all of the registered informer injectors.
 	GetInformers() []InformerInjector
+
+	GetInfromerGVRs() []v1.GroupVersionResource
 
 	// SetupInformers runs all of the injectors against a context, starting with
 	// the clients and the given rest.Config.  The resulting context is returned
@@ -84,8 +88,9 @@ var (
 type impl struct {
 	m sync.RWMutex
 
-	clients   []ClientInjector
-	factories []InformerFactoryInjector
-	informers []InformerInjector
-	ducks     []DuckFactoryInjector
+	clients      []ClientInjector
+	factories    []InformerFactoryInjector
+	informers    []InformerInjector
+	informerGVRs []v1.GroupVersionResource
+	ducks        []DuckFactoryInjector
 }

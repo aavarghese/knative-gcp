@@ -21,15 +21,16 @@ package broker
 import (
 	context "context"
 
+	"github.com/google/knative-gcp/pkg/injection"
+
 	v1beta1 "github.com/google/knative-gcp/pkg/client/informers/externalversions/broker/v1beta1"
 	factory "github.com/google/knative-gcp/pkg/client/injection/informers/factory"
 	controller "knative.dev/pkg/controller"
-	injection "knative.dev/pkg/injection"
 	logging "knative.dev/pkg/logging"
 )
 
 func init() {
-	injection.Default.RegisterInformer(withInformer)
+	injection.Default.RegisterInformer(withInformer, "brokers.eventing.knative.dev")
 }
 
 // Key is used for associating the Informer inside the context.Context.

@@ -17,7 +17,13 @@ limitations under the License.
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
+
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"google.golang.org/api/option"
 
@@ -50,6 +56,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	ctx = injection.WithStartupHook(ctx, requiredCRDsOrDie)
 	sharedmain.MainWithContext(ctx, "controller", controllers...)
 }
 
@@ -82,5 +89,20 @@ func Controllers(
 }
 
 func ClientOptions() []option.ClientOption {
+	return nil
+}
+
+func requiredCRDsOrDie(ctx context.Context) error {
+	cfg := injection.GetConfig(ctx)
+	client := apiextensionsv1beta1.NewForConfigOrDie(cfg)
+	crds := []string{
+		"triggers.v1.eventing.knative.dev",
+	}
+	for _, crd := range crds {
+		_, err := client.CustomResourceDefinitions().Get(crd, metav1.GetOptions{})
+		if k8serrors.IsNotFound(err) {
+			return fmt.Errorf("unable to get %q: %w", crd, err)
+		}
+	}
 	return nil
 }

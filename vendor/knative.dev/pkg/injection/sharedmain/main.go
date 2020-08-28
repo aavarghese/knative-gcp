@@ -201,6 +201,13 @@ func MainWithConfig(ctx context.Context, component string, cfg *rest.Config, cto
 	profilingServer := profiling.NewServer(profilingHandler)
 
 	CheckK8sClientMinimumVersionOrDie(ctx, logger)
+
+	for _, hook := range injection.GetStartupHooks(ctx) {
+		if err := hook(ctx); err != nil {
+			logger.Fatalw("Startup Hook error", zap.Error(err))
+		}
+	}
+
 	cmw := SetupConfigMapWatchOrDie(ctx, logger)
 
 	// Set up leader election config
