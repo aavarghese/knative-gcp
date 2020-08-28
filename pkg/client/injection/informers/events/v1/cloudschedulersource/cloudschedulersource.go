@@ -29,7 +29,7 @@ import (
 )
 
 func init() {
-	injection.Default.RegisterInformer(withInformer)
+	injection.Default.RegisterInformer(withInformer, "cloudschedulersources.events.cloud.google.com")
 }
 
 // Key is used for associating the Informer inside the context.Context.

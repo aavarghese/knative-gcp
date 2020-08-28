@@ -81,6 +81,7 @@ func (g *injectionGenerator) GenerateType(c *generator.Context, t *types.Type, w
 
 	m := map[string]interface{}{
 		"group":                     namer.IC(g.groupGoName),
+		"group2": g.groupVersion.Group,
 		"type":                      t,
 		"version":                   namer.IC(g.groupVersion.Version.String()),
 		"injectionRegisterInformer": c.Universe.Type(types.Name{Package: "knative.dev/pkg/injection", Name: "Default.RegisterInformer"}),
@@ -104,7 +105,7 @@ func (g *injectionGenerator) GenerateType(c *generator.Context, t *types.Type, w
 
 var injectionInformer = `
 func init() {
-	{{.injectionRegisterInformer|raw}}(withInformer, {{.type|allLowercasePlural}}.{{.group}})
+	{{.injectionRegisterInformer|raw}}(withInformer, "{{.type|allLowercasePlural}}.{{.group2}}")
 }
 
 // Key is used for associating the Informer inside the context.Context.
