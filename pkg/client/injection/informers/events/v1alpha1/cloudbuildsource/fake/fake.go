@@ -23,6 +23,7 @@ import (
 
 	cloudbuildsource "github.com/google/knative-gcp/pkg/client/injection/informers/events/v1alpha1/cloudbuildsource"
 	fake "github.com/google/knative-gcp/pkg/client/injection/informers/factory/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
 )
@@ -30,7 +31,13 @@ import (
 var Get = cloudbuildsource.Get
 
 func init() {
-	injection.Fake.RegisterInformer(withInformer)
+	injection.Fake.RegisterInformer(
+		withInformer,
+		metav1.GroupVersionResource{
+			Group:    "events.cloud.google.com",
+			Version:  "v1alpha1",
+			Resource: "cloudbuildsources",
+		})
 }
 
 func withInformer(ctx context.Context) (context.Context, controller.Informer) {

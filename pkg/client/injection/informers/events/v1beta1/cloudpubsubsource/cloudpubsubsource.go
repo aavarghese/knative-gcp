@@ -34,7 +34,7 @@ func init() {
 		withInformer,
 		metav1.GroupVersionResource{
 			Group:    "events.cloud.google.com",
-			Version:  "V1beta1",
+			Version:  "v1beta1",
 			Resource: "cloudpubsubsources",
 		})
 }

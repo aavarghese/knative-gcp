@@ -23,6 +23,7 @@ import (
 
 	broker "github.com/google/knative-gcp/pkg/client/injection/informers/broker/v1beta1/broker"
 	fake "github.com/google/knative-gcp/pkg/client/injection/informers/factory/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
 )
@@ -30,7 +31,13 @@ import (
 var Get = broker.Get
 
 func init() {
-	injection.Fake.RegisterInformer(withInformer)
+	injection.Fake.RegisterInformer(
+		withInformer,
+		metav1.GroupVersionResource{
+			Group:    "eventing.knative.dev",
+			Version:  "v1beta1",
+			Resource: "brokers",
+		})
 }
 
 func withInformer(ctx context.Context) (context.Context, controller.Informer) {

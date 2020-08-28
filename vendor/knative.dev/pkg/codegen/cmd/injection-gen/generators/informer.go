@@ -80,10 +80,16 @@ func (g *injectionGenerator) GenerateType(c *generator.Context, t *types.Type, w
 
 	klog.V(5).Infof("processing type %v", t)
 
+	// Example values are for the Trigger CRD, version v1beta1, in eventing.knative.dev.
 	m := map[string]interface{}{
-		"group":                     namer.IC(g.groupGoName),
-		"group2": g.groupVersion.Group,
-		"type":                      t,
+		// Example: Eventing
+		"group": namer.IC(g.groupGoName),
+		// Example: eventing.knative.dev
+		"crdGroup": g.groupVersion.Group,
+		// Example: v1beta1
+		"crdVersion": g.groupVersion.Version,
+		"type":     t,
+		// Example: V1beta1
 		"version":                   namer.IC(g.groupVersion.Version.String()),
 		"injectionRegisterInformer": c.Universe.Type(types.Name{Package: "knative.dev/pkg/injection", Name: "Default.RegisterInformer"}),
 		"controllerInformer":        c.Universe.Type(types.Name{Package: "knative.dev/pkg/controller", Name: "Informer"}),
@@ -109,8 +115,8 @@ func init() {
 	{{.injectionRegisterInformer|raw}}(
 		withInformer,
 		metav1.GroupVersionResource{
-			Group: "{{.group2}}",
-			Version: "{{.version}}",
+			Group: "{{.crdGroup}}",
+			Version: "{{.crdVersion}}",
 			Resource: "{{.type|allLowercasePlural}}",
 	})
 }

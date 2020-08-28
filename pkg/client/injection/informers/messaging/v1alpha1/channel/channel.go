@@ -34,7 +34,7 @@ func init() {
 		withInformer,
 		metav1.GroupVersionResource{
 			Group:    "messaging.cloud.google.com",
-			Version:  "V1alpha1",
+			Version:  "v1alpha1",
 			Resource: "channels",
 		})
 }

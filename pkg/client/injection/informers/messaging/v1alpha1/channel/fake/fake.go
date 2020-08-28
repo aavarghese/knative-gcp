@@ -23,6 +23,7 @@ import (
 
 	fake "github.com/google/knative-gcp/pkg/client/injection/informers/factory/fake"
 	channel "github.com/google/knative-gcp/pkg/client/injection/informers/messaging/v1alpha1/channel"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
 )
@@ -30,7 +31,13 @@ import (
 var Get = channel.Get
 
 func init() {
-	injection.Fake.RegisterInformer(withInformer)
+	injection.Fake.RegisterInformer(
+		withInformer,
+		metav1.GroupVersionResource{
+			Group:    "messaging.cloud.google.com",
+			Version:  "v1alpha1",
+			Resource: "channels",
+		})
 }
 
 func withInformer(ctx context.Context) (context.Context, controller.Informer) {

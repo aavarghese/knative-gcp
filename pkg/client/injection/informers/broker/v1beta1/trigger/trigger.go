@@ -34,7 +34,7 @@ func init() {
 		withInformer,
 		metav1.GroupVersionResource{
 			Group:    "eventing.knative.dev",
-			Version:  "V1beta1",
+			Version:  "v1beta1",
 			Resource: "triggers",
 		})
 }
