@@ -71,6 +71,7 @@ func (g *injectionGenerator) Namers(c *generator.Context) namer.NameSystems {
 
 func (g *injectionGenerator) Imports(c *generator.Context) (imports []string) {
 	imports = append(imports, g.imports.ImportLines()...)
+	imports = append(imports, "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"")
 	return
 }
 
@@ -105,7 +106,13 @@ func (g *injectionGenerator) GenerateType(c *generator.Context, t *types.Type, w
 
 var injectionInformer = `
 func init() {
-	{{.injectionRegisterInformer|raw}}(withInformer, "{{.type|allLowercasePlural}}.{{.group2}}")
+	{{.injectionRegisterInformer|raw}}(
+		withInformer,
+		metav1.GroupVersionResource{
+			Group: "{{.group2}}",
+			Version: "{{.version}}",
+			Resource: "{{.type|allLowercasePlural}}",
+	})
 }
 
 // Key is used for associating the Informer inside the context.Context.

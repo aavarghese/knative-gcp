@@ -21,6 +21,8 @@ package broker
 import (
 	context "context"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	v1beta1 "github.com/google/knative-gcp/pkg/client/informers/externalversions/broker/v1beta1"
 	factory "github.com/google/knative-gcp/pkg/client/injection/informers/factory"
 	controller "knative.dev/pkg/controller"
@@ -29,6 +31,11 @@ import (
 )
 
 func init() {
+	v1.GroupVersionResource{
+		Group:    group,
+		Version:  version,
+		Resource: resource,
+	}
 	injection.Default.RegisterInformer(withInformer, "brokers.eventing.knative.dev")
 }
 
