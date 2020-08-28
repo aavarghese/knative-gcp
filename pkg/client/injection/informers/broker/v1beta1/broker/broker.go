@@ -21,22 +21,22 @@ package broker
 import (
 	context "context"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	v1beta1 "github.com/google/knative-gcp/pkg/client/informers/externalversions/broker/v1beta1"
 	factory "github.com/google/knative-gcp/pkg/client/injection/informers/factory"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
 	logging "knative.dev/pkg/logging"
 )
 
 func init() {
-	v1.GroupVersionResource{
-		Group:    group,
-		Version:  version,
-		Resource: resource,
-	}
-	injection.Default.RegisterInformer(withInformer, "brokers.eventing.knative.dev")
+	injection.Default.RegisterInformer(
+		withInformer,
+		metav1.GroupVersionResource{
+			Group:    "eventing.knative.dev",
+			Version:  "V1beta1",
+			Resource: "brokers",
+		})
 }
 
 // Key is used for associating the Informer inside the context.Context.

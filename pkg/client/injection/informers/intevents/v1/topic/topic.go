@@ -23,13 +23,20 @@ import (
 
 	v1 "github.com/google/knative-gcp/pkg/client/informers/externalversions/intevents/v1"
 	factory "github.com/google/knative-gcp/pkg/client/injection/informers/factory"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
 	logging "knative.dev/pkg/logging"
 )
 
 func init() {
-	injection.Default.RegisterInformer(withInformer, "topics.internal.events.cloud.google.com")
+	injection.Default.RegisterInformer(
+		withInformer,
+		metav1.GroupVersionResource{
+			Group:    "internal.events.cloud.google.com",
+			Version:  "V1",
+			Resource: "topics",
+		})
 }
 
 // Key is used for associating the Informer inside the context.Context.
