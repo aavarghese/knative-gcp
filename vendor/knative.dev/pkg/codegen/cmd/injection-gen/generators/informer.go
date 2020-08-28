@@ -63,8 +63,9 @@ func (g *injectionGenerator) Namers(c *generator.Context) namer.NameSystems {
 	}
 
 	return namer.NameSystems{
-		"raw":          namer.NewRawNamer(g.outputPackage, g.imports),
-		"publicPlural": publicPluralNamer,
+		"raw":                namer.NewRawNamer(g.outputPackage, g.imports),
+		"publicPlural":       publicPluralNamer,
+		"allLowercasePlural": NameSystems()["allLowercasePlural"],
 	}
 }
 
@@ -103,7 +104,7 @@ func (g *injectionGenerator) GenerateType(c *generator.Context, t *types.Type, w
 
 var injectionInformer = `
 func init() {
-	{{.injectionRegisterInformer|raw}}(withInformer)
+	{{.injectionRegisterInformer|raw}}(withInformer, {{.type|allLowercasePlural}}.{{.group}})
 }
 
 // Key is used for associating the Informer inside the context.Context.

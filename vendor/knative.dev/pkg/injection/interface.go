@@ -58,7 +58,7 @@ type Interface interface {
 	// GetInformers fetches all of the registered informer injectors.
 	GetInformers() []InformerInjector
 
-	GetInfromerGVRs() []v1.GroupVersionResource
+	GetInformerGVRs() []v1.GroupVersionResource
 
 	// SetupInformers runs all of the injectors against a context, starting with
 	// the clients and the given rest.Config.  The resulting context is returned

@@ -46,6 +46,14 @@ func (i *impl) GetInformers() []InformerInjector {
 	return append(i.informers[:0:0], i.informers...)
 }
 
+func (i *impl) GetInformerGVRs() []v1.GroupVersionResource {
+	i.m.RLock()
+	defer i.m.RUnlock()
+
+	// Copy the slice before returning.
+	return append(i.informerGVRs[:0:0], i.informerGVRs...)
+}
+
 func (i *impl) SetupInformers(ctx context.Context, cfg *rest.Config) (context.Context, []controller.Informer) {
 	// Based on the reconcilers we have linked, build up a set of clients and inject
 	// them onto the context.
