@@ -65,4 +65,6 @@ const (
 	E2EDummyEventSource = "e2e-dummy-event-source"
 	// E2EDummyRespEventSource is the source of the resp event sent by image `receiver`
 	E2EDummyRespEventSource = "e2e-dummy-resp-event-source"
+	//
+	E2EOutOfBandEventType = "e2e-out-of-band-event-type"
 )

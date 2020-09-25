@@ -26,12 +26,16 @@ import (
 	"os"
 	"time"
 
+	servingv1 "github.com/google/knative-gcp/vendor/knative.dev/serving/pkg/apis/serving/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"cloud.google.com/go/pubsub"
 	v1 "k8s.io/api/core/v1"
 	eventingv1beta1 "knative.dev/eventing/pkg/apis/eventing/v1beta1"
 	eventingtestlib "knative.dev/eventing/test/lib"
 	eventingtestresources "knative.dev/eventing/test/lib/resources"
 	"knative.dev/pkg/test/helpers"
+	servingv1 "knative.dev/serving/pkg/apis/serving/v1"
 
 	// The following line to load the gcp plugin (only required to authenticate against GKE clusters).
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -205,7 +209,7 @@ func BrokerEventTransformationTracingTestHelper(client *lib.Client, projectID st
 	makeTargetJobOrDie(client, targetName)
 
 	// Create the Knative Service.
-	kserviceName := CreateKService(client, "receiver")
+	kserviceName := CreateKService(client, "receiver").Name
 
 	// Create a Trigger with the Knative Service subscriber.
 	triggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
@@ -251,6 +255,132 @@ func BrokerEventTransformationTracingTestHelper(client *lib.Client, projectID st
 	VerifyTrace(client.T, testTree, projectID, senderOutput.TraceID)
 }
 
+func BrokerEventTransformationKSVCTracingTestHelper(client *lib.Client, projectID string, brokerURL url.URL, brokerName string) {
+	// senderJob -> broker -> oobSenderKSVC -out-of-band-> broker -> mutatorKSVC -reply-> broker -> targetJob
+
+	client.T.Helper()
+	senderName := helpers.AppendRandomString("sender")
+	targetName := helpers.AppendRandomString("target")
+
+	// Create a target Job to receive the events.
+	makeTargetJobOrDie(client, targetName)
+
+	// Create the Knative Services.
+	oobSenderKSVCName := CreateKService(client, "oob_sender").Name
+	mutatorKSVCName := CreateKService(client, "receiver").Name
+
+	// Create a Trigger with the Knative Service subscriber.
+	oobSenderTriggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
+		eventingv1beta1.TriggerAnyFilter, eventingv1beta1.TriggerAnyFilter,
+		map[string]interface{}{"type": lib.E2EDummyEventType})
+	oobSenderTrigger := createTriggerWithKServiceSubscriber(client, brokerName, oobSenderKSVCName, oobSenderTriggerFilter)
+	mutatorTriggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
+		eventingv1beta1.TriggerAnyFilter, eventingv1beta1.TriggerAnyFilter,
+		map[string]interface{}{"type": lib.E2EOutOfBandEventType})
+	// mutatorTrigger :=
+	createTriggerWithKServiceSubscriber(client, brokerName, mutatorKSVCName, mutatorTriggerFilter)
+
+	// Create a Trigger with the target Service subscriber.
+	respTriggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
+		eventingv1beta1.TriggerAnyFilter, eventingv1beta1.TriggerAnyFilter,
+		map[string]interface{}{"type": lib.E2EDummyRespEventType})
+	respTrigger := createTriggerWithTargetServiceSubscriber(client, brokerName, targetName, respTriggerFilter)
+
+	// Wait for all KSVCs and Triggers to be ready.
+	client.Core.WaitForResourcesReadyOrFail(lib.KsvcTypeMeta)
+	client.Core.WaitForResourcesReadyOrFail(eventingtestlib.TriggerTypeMeta)
+
+	// Just to make sure all resources are ready.
+	time.Sleep(resources.WaitBrokercellTime)
+
+	// Create a sender Job to send the event with retry.
+	senderJob := resources.SenderJob(senderName, []v1.EnvVar{{
+		Name:  "BROKER_URL",
+		Value: brokerURL.String(),
+	}, {
+		Name:  "RETRY",
+		Value: "true",
+	}})
+	client.CreateJobOrFail(senderJob)
+
+	// Check if dummy CloudEvent is sent out.
+	senderOutput := new(lib.SenderOutput)
+	if err := jobOutput(client, senderName, senderOutput); err != nil {
+		client.T.Errorf("dummy event wasn't sent to broker: %v", err)
+		client.T.Failed()
+	}
+	// Check if resp CloudEvent hits the target Service.
+	if done := jobDone(client, targetName); !done {
+		client.T.Error("resp event didn't hit the target pod")
+		client.T.Failed()
+	}
+	testTree := BrokerTestTree(client.Namespace, brokerName, oobSenderTrigger.Name, respTrigger.Name)
+	VerifyTrace(client.T, testTree, projectID, senderOutput.TraceID)
+}
+
+func BrokerEventTransformationKSVCTracingTestHelper2(client *lib.Client, projectID string, brokerURL url.URL, brokerName string) {
+	// This is very similar to BrokerEventTransformationTracingTestHelper. It differs in how the
+	// initial request is made. In this test, a Job pokes a KSVC which makes the initial request,
+	// whereas in the other function the job makes the request directly to the Broker.
+	// job_poker -> ksvc_sender -> broker -> ksvc_mutator -(reply)-> broker -> job_knockdown
+
+	client.T.Helper()
+	pokerJobName := helpers.AppendRandomString("poker-job")
+	knockdownJobName := helpers.AppendRandomString("target")
+
+	// Create a target Job to receive the events.
+	makeTargetJobOrDie(client, knockdownJobName)
+
+	// Create the sender Knative Service.
+	senderKSVC := CreateKService(client, "ksvc_sender")
+
+	// Create the mutating Knative Service.
+	mutatingKSVC := CreateKService(client, "receiver")
+
+	// Create a Trigger with the Knative Service subscriber.
+	triggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
+		eventingv1beta1.TriggerAnyFilter, eventingv1beta1.TriggerAnyFilter,
+		map[string]interface{}{"type": lib.E2EDummyEventType})
+	trigger := createTriggerWithKServiceSubscriber(client, brokerName, mutatingKSVC.Name, triggerFilter)
+
+	// Create a Trigger with the target Service subscriber.
+	respTriggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
+		eventingv1beta1.TriggerAnyFilter, eventingv1beta1.TriggerAnyFilter,
+		map[string]interface{}{"type": lib.E2EDummyRespEventType})
+	respTrigger := createTriggerWithTargetServiceSubscriber(client, brokerName, knockdownJobName, respTriggerFilter)
+
+	// Wait for ksvc, trigger ready.
+	client.Core.WaitForResourcesReadyOrFail(lib.KsvcTypeMeta)
+	client.Core.WaitForResourcesReadyOrFail(eventingtestlib.TriggerTypeMeta)
+
+	// Just to make sure all resources are ready.
+	time.Sleep(resources.WaitBrokercellTime)
+
+	// Create a sender Job to send the event with retry.
+	senderJob := resources.SenderJob(pokerJobName, []v1.EnvVar{{
+		Name:  "BROKER_URL",
+		Value: senderKSVC.Status.URL.String(),
+	}, {
+		Name:  "RETRY",
+		Value: "true",
+	}})
+	client.CreateJobOrFail(senderJob)
+
+	// Check if dummy CloudEvent is sent out.
+	senderOutput := new(lib.SenderOutput)
+	if err := jobOutput(client, pokerJobName, senderOutput); err != nil {
+		client.T.Errorf("dummy event wasn't sent to broker: %v", err)
+		client.T.Failed()
+	}
+	// Check if resp CloudEvent hits the target Service.
+	if done := jobDone(client, knockdownJobName); !done {
+		client.T.Error("resp event didn't hit the target pod")
+		client.T.Failed()
+	}
+	testTree := BrokerTestTree(client.Namespace, brokerName, trigger.Name, respTrigger.Name)
+	VerifyTrace(client.T, testTree, projectID, senderOutput.TraceID)
+}
+
 func BrokerEventTransformationTestWithPubSubSourceHelper(client *lib.Client, authConfig lib.AuthConfig, brokerURL url.URL, brokerName string) {
 	client.T.Helper()
 	project := os.Getenv(lib.ProwProjectKey)
@@ -265,7 +395,7 @@ func BrokerEventTransformationTestWithPubSubSourceHelper(client *lib.Client, aut
 	// Create a target PubSub Job to receive the events.
 	lib.MakePubSubTargetJobOrDie(client, source, targetName, lib.E2EPubSubRespEventType /*empty schema*/, "")
 	// Create the Knative Service.
-	kserviceName := CreateKService(client, "pubsub_receiver")
+	kserviceName := CreateKService(client, "pubsub_receiver").Name
 
 	// Create a Trigger with the Knative Service subscriber.
 	triggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
@@ -330,7 +460,7 @@ func BrokerEventTransformationTestWithStorageSourceHelper(client *lib.Client, au
 	// Create a target StorageJob to receive the events.
 	lib.MakeStorageJobOrDie(client, source, subject, targetName, lib.E2EStorageRespEventType)
 	// Create the Knative Service.
-	kserviceName := CreateKService(client, "storage_receiver")
+	kserviceName := CreateKService(client, "storage_receiver").Name
 
 	// Create a Trigger with the Knative Service subscriber.
 	triggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
@@ -382,7 +512,7 @@ func BrokerEventTransformationTestWithAuditLogsSourceHelper(client *lib.Client, 
 	// Create a target Job to receive the events.
 	lib.MakeAuditLogsJobOrDie(client, lib.PubSubCreateTopicMethodName, project, resourceName, lib.PubSubServiceName, targetName, lib.E2EAuditLogsRespType)
 	// Create the Knative Service.
-	kserviceName := CreateKService(client, "auditlogs_receiver")
+	kserviceName := CreateKService(client, "auditlogs_receiver").Name
 
 	// Create a Trigger with the Knative Service subscriber.
 	triggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
@@ -439,7 +569,7 @@ func BrokerEventTransformationTestWithSchedulerSourceHelper(client *lib.Client, 
 
 	lib.MakeSchedulerJobOrDie(client, data, targetName, lib.E2ESchedulerRespType)
 	// Create the Knative Service.
-	kserviceName := CreateKService(client, "scheduler_receiver")
+	kserviceName := CreateKService(client, "scheduler_receiver").Name
 
 	// Create a Trigger with the Knative Service subscriber.
 	triggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
@@ -479,15 +609,20 @@ func BrokerEventTransformationTestWithSchedulerSourceHelper(client *lib.Client, 
 	}
 }
 
-func CreateKService(client *lib.Client, imageName string) string {
+func CreateKService(client *lib.Client, imageName string) servingv1.Service {
 	client.T.Helper()
 	kserviceName := helpers.AppendRandomString("kservice")
 	// Create the Knative Service.
 	kservice := resources.ReceiverKService(
 		kserviceName, client.Namespace, imageName)
-	client.CreateUnstructuredObjOrFail(kservice)
-	return kserviceName
+	o := client.CreateUnstructuredObjOrFail(kservice)
 
+	var ksvc servingv1.Service
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(o.UnstructuredContent(), &ksvc)
+	if err != nil {
+		client.T.Fatalf("Unable to convert from unstructured to KSVC: %v", err)
+	}
+	return ksvc
 }
 
 func createFirstNErrsReceiver(client *lib.Client, firstNErrs int) string {

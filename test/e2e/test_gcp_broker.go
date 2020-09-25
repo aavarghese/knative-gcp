@@ -71,6 +71,16 @@ func GCPBrokerMetricsTestImpl(t *testing.T, authConfig lib.AuthConfig) {
 }
 
 func GCPBrokerTracingTestImpl(t *testing.T, authConfig lib.AuthConfig) {
+	gcpbrokerTracingTestImpl(t, authConfig, kngcphelpers.BrokerEventTransformationTracingTestHelper)
+}
+
+func GCPBrokerKSVCTracingTestImpl(t *testing.T, authConfig lib.AuthConfig) {
+	gcpbrokerTracingTestImpl(t, authConfig, kngcphelpers.BrokerEventTransformationKSVCTracingTestHelper)
+}
+
+type brokerTestHelper func(client *lib.Client, projectID string, brokerURL url.URL, brokerName string)
+
+func gcpbrokerTracingTestImpl(t *testing.T, authConfig lib.AuthConfig, testHelper brokerTestHelper) {
 	projectID := lib.GetEnvOrFail(t, lib.ProwProjectKey)
 	ctx := context.Background()
 	client := lib.Setup(ctx, t, true, authConfig.WorkloadIdentity)
@@ -85,7 +95,7 @@ func GCPBrokerTracingTestImpl(t *testing.T, authConfig lib.AuthConfig) {
 	}
 
 	brokerURL, brokerName := createGCPBroker(client)
-	kngcphelpers.BrokerEventTransformationTracingTestHelper(client, projectID, brokerURL, brokerName)
+	testHelper(client, projectID, brokerURL, brokerName)
 }
 
 func PubSubSourceWithGCPBrokerTestImpl(t *testing.T, authConfig lib.AuthConfig) {

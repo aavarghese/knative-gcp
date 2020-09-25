@@ -36,16 +36,17 @@ import (
 	messagingv1beta1 "github.com/google/knative-gcp/pkg/apis/messaging/v1beta1"
 )
 
-func (c *Client) CreateUnstructuredObjOrFail(spec *unstructured.Unstructured) {
+func (c *Client) CreateUnstructuredObjOrFail(spec *unstructured.Unstructured) *unstructured.Unstructured {
 	ctx := context.Background()
 	c.T.Helper()
 	gvr, _ := meta.UnsafeGuessKindToResource(spec.GroupVersionKind())
-	_, err := c.Core.Dynamic.Resource(gvr).Namespace(c.Namespace).Create(ctx, spec, v1.CreateOptions{})
+	o, err := c.Core.Dynamic.Resource(gvr).Namespace(c.Namespace).Create(ctx, spec, v1.CreateOptions{})
 	if err != nil {
 		c.T.Fatalf("Failed to create object %s %s/%s: %v", spec.GroupVersionKind().String(), c.Namespace, spec.GetName(), err)
 	}
 	c.T.Logf("Created object: %s %s/%s", spec.GroupVersionKind().String(), c.Namespace, spec.GetName())
 	c.Tracker.Add(gvr.Group, gvr.Version, gvr.Resource, c.Namespace, spec.GetName())
+	return o
 }
 
 func (c *Client) CreateChannelOrFail(channel *messagingv1beta1.Channel) {
