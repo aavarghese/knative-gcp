@@ -19,13 +19,48 @@ package resources
 import (
 	"strconv"
 
+	v1 "k8s.io/api/core/v1"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	pkgTest "knative.dev/pkg/test"
 )
 
 // ReceiverKService creates a Knative Service as an event receiver.
-func ReceiverKService(name, namespace, imageName string) *unstructured.Unstructured {
-	return FirstNErrsReceiverKService(name, namespace, imageName, 0)
+func ReceiverKService(name, namespace, imageName string, envVars map[string]string) *unstructured.Unstructured {
+	var env []v1.EnvVar
+	for n, v := range envVars {
+		env = append(env, v1.EnvVar{
+			Name:  n,
+			Value: v,
+		})
+	}
+	obj := map[string]interface{}{
+		"apiVersion": "serving.knative.dev/v1",
+		"kind":       "Service",
+		"metadata": map[string]interface{}{
+			"name":      name,
+			"namespace": namespace,
+		},
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []map[string]interface{}{{
+						"image": pkgTest.ImagePath(imageName),
+						"env":   env,
+					}},
+				},
+			},
+		},
+	}
+	return &unstructured.Unstructured{Object: obj}
+}
+
+// FirstNErrsReceiverKService creates a Knative Service as an event receiver with its
+// first N responses being errors.
+func FirstNErrsReceiverKService2(name, namespace, imageName string, firstN int) *unstructured.Unstructured {
+	return ReceiverKService(name, namespace, imageName, map[string]string{
+		"FIRST_N_ERRS": strconv.Itoa(firstN),
+	})
 }
 
 // FirstNErrsReceiverKService creates a Knative Service as an event receiver with its

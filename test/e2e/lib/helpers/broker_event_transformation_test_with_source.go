@@ -26,7 +26,6 @@ import (
 	"os"
 	"time"
 
-	servingv1 "github.com/google/knative-gcp/vendor/knative.dev/serving/pkg/apis/serving/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"cloud.google.com/go/pubsub"
@@ -70,7 +69,7 @@ func BrokerEventTransformationTestHelper(client *lib.Client, brokerURL url.URL, 
 	makeTargetJobOrDie(client, targetName)
 
 	// Create the Knative Service.
-	kserviceName := CreateKService(client, "receiver")
+	kserviceName := CreateKService(client, "receiver").Name
 
 	// Create a Trigger with the Knative Service subscriber.
 	triggerFilter := eventingtestresources.WithAttributesTriggerFilterV1Beta1(
@@ -266,7 +265,9 @@ func BrokerEventTransformationKSVCTracingTestHelper(client *lib.Client, projectI
 	makeTargetJobOrDie(client, targetName)
 
 	// Create the Knative Services.
-	oobSenderKSVCName := CreateKService(client, "oob_sender").Name
+	oobSenderKSVCName := CreateKServiceWithEnvVars(client, "oob_receiver", map[string]string{
+		"BROKER_URL": brokerURL.String(),
+	}).Name
 	mutatorKSVCName := CreateKService(client, "receiver").Name
 
 	// Create a Trigger with the Knative Service subscriber.
@@ -610,11 +611,15 @@ func BrokerEventTransformationTestWithSchedulerSourceHelper(client *lib.Client, 
 }
 
 func CreateKService(client *lib.Client, imageName string) servingv1.Service {
+	return CreateKServiceWithEnvVars(client, imageName, nil)
+}
+
+func CreateKServiceWithEnvVars(client *lib.Client, imageName string, envVars map[string]string) servingv1.Service {
 	client.T.Helper()
 	kserviceName := helpers.AppendRandomString("kservice")
 	// Create the Knative Service.
 	kservice := resources.ReceiverKService(
-		kserviceName, client.Namespace, imageName)
+		kserviceName, client.Namespace, imageName, envVars)
 	o := client.CreateUnstructuredObjOrFail(kservice)
 
 	var ksvc servingv1.Service
