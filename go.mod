@@ -1,4 +1,4 @@
-module github.com/google/knative-gcp
+module github.com/aavarghese/knative-gcp
 
 go 1.14
 
