@@ -56,7 +56,7 @@ deployment spec of all broker components.
 			},
 ```
 
-https://github.com/google/knative-gcp/blob/e925d61ab5aff3e033d6cb2c505c7ab504c2b9b3/pkg/reconciler/brokercell/resources/deployments.go#L193-L223
+https://github.com/aavarghese/knative-gcp/blob/e925d61ab5aff3e033d6cb2c505c7ab504c2b9b3/pkg/reconciler/brokercell/resources/deployments.go#L193-L223
 
 > **Tip**: Always set `GCP_PROFILER_SERVICE_VERSION` to a unique value when
 > running a different test scenario. It would allow you to easily tell a profile

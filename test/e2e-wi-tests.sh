@@ -107,7 +107,7 @@ function control_plane_setup() {
 # Create resources required for Pub/Sub Admin setup.
 function pubsub_setup() {
   # If the tests are run on Prow, clean up the topics and subscriptions before running them.
-  # See https://github.com/google/knative-gcp/issues/494
+  # See https://github.com/aavarghese/knative-gcp/issues/494
   if (( IS_PROW )); then
     delete_topics_and_subscriptions
   fi

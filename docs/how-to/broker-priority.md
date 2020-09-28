@@ -8,7 +8,7 @@ of cluster nodes and number of pods running in total.
 
 As existing components use more resources and as we add more new components,
 more cluster and node resources are required to run Kubernetes. This
-[summary](https://github.com/google/knative-gcp/issues/1502#issuecomment-664793074)  
+[summary](https://github.com/aavarghese/knative-gcp/issues/1502#issuecomment-664793074)  
 illustrates the broker components may at risk to be OOMKilled/evicted/preempted
 when node is over-committed.
 

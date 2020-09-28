@@ -1,3 +1,3 @@
 # Managing Multiple Projects
 
-Documentation coming soon! See https://github.com/google/knative-gcp/issues/460
+Documentation coming soon! See https://github.com/aavarghese/knative-gcp/issues/460

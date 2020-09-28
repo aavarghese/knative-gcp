@@ -79,7 +79,7 @@ Workload Identity see
 
 ## Deployment
 
-- For up to [v0.15.0](https://github.com/google/knative-gcp/tree/v0.15.0), apply
+- For up to [v0.15.0](https://github.com/aavarghese/knative-gcp/tree/v0.15.0), apply
   GCP broker yamls:
 
   ```shell
@@ -87,7 +87,7 @@ Workload Identity see
   ```
 
 - In the latest version, relevant components
-  [will be created by BrokerCell on demand](https://github.com/google/knative-gcp/pull/1170),
+  [will be created by BrokerCell on demand](https://github.com/aavarghese/knative-gcp/pull/1170),
   so, no broker-specific configs are needed at this point.
 
 ## Usage
@@ -147,11 +147,11 @@ and pull subscriptions for GCP Brokers, and the retry topics and pull
 subscriptions for the Triggers.
 
 - Code: The logic in in
-  [broker.go](https://github.com/google/knative-gcp/blob/master/pkg/reconciler/broker/broker.go).
+  [broker.go](https://github.com/aavarghese/knative-gcp/blob/master/pkg/reconciler/broker/broker.go).
   The main function is the
-  [shared main function](https://github.com/google/knative-gcp/blob/master/cmd/controller/main.go)
+  [shared main function](https://github.com/aavarghese/knative-gcp/blob/master/cmd/controller/main.go)
   with other controllers.
-- [Deployment](https://github.com/google/knative-gcp/blob/master/config/500-controller.yaml):
+- [Deployment](https://github.com/aavarghese/knative-gcp/blob/master/config/500-controller.yaml):
   By default it's deployed as `controller` in the `cloud-run-events` namespace.
 
 ### Data Plane
@@ -161,20 +161,20 @@ All GCP Brokers share the following data plane components:
 - Ingress. Ingress accepts events over HTTP/HTTPS and persists events in a
   Pub/Sub topic specific to each Broker.
   - Code:
-    [main.go](https://github.com/google/knative-gcp/blob/master/cmd/broker/ingress/main.go)
+    [main.go](https://github.com/aavarghese/knative-gcp/blob/master/cmd/broker/ingress/main.go)
   - Deployment: It contains a Service and Deployment, both called
     `broker-ingress` in the `cloud-run-events` namespace.
 - Fanout. Fanout continuously pull events from decouple topics for all Brokers,
   applies Trigger filters, and sends events to consumers. For failed deliveries,
   it sends the events to the corresponding retry topic.
   - Code:
-    [main.go](https://github.com/google/knative-gcp/blob/master/cmd/broker/fanout/main.go)
+    [main.go](https://github.com/aavarghese/knative-gcp/blob/master/cmd/broker/fanout/main.go)
   - Deployment: It a deployment called `broker-fanout` in the `cloud-run-events`
     namespace.
 - Retry. Retry continuously resends events that have failed in delivery to the
   consumers.
   - Code:
-    [main.go](https://github.com/google/knative-gcp/blob/master/cmd/broker/retry/main.go)
+    [main.go](https://github.com/aavarghese/knative-gcp/blob/master/cmd/broker/retry/main.go)
   - Deployment: It a deployment called `broker-retry` in the `cloud-run-events`
     namespace.
 
@@ -187,7 +187,7 @@ All GCP Brokers share the following data plane components:
    - Check if the ingress service is ready.
    - Try sending an event anyway. Sometimes Broker is working but its status is
      not updated quickly, see issue
-     [#912](https://github.com/google/knative-gcp/issues/912).
+     [#912](https://github.com/aavarghese/knative-gcp/issues/912).
 1. Trigger is not READY
    - Check the controller logs to see if there are any errors.
    - Check if the retry topic and pull subscription are created. They are named
@@ -206,7 +206,7 @@ All GCP Brokers share the following data plane components:
    - Check if the decouple pull subscription exists. Also make sure its topic is
      not `_deleted_topic_`. If so, it's likely that someone manually deleted the
      decoupling topic, see
-     [#832](https://github.com/google/knative-gcp/issues/832). In this case you
+     [#832](https://github.com/aavarghese/knative-gcp/issues/832). In this case you
      need to delete the pull subscription manually and wait for it to be
      recreated by the controller.
    - Compare `/var/run/cloud-run-events/broker/targets` file in the fanout pod
@@ -221,7 +221,7 @@ All GCP Brokers share the following data plane components:
    - Check if the retry topic and pull subscription exists. Also make sure its
      topic is not `_deleted_topic_`. If so, it's likely that someone manually
      deleted the decoupling topic, see
-     [#832](https://github.com/google/knative-gcp/issues/832). In this case you
+     [#832](https://github.com/aavarghese/knative-gcp/issues/832). In this case you
      need to delete the pull subscription manually and wait for it to be
      recreated by the controller.
    - Compare `/var/run/cloud-run-events/broker/targets` file in the retry pod
@@ -231,5 +231,5 @@ All GCP Brokers share the following data plane components:
      wait for it to be recreated. Meanwhile file a bug.
 1. Cannot delete a Trigger.
    - If the Broker doesn't exist, then it's a known issue:
-     [#828](https://github.com/google/knative-gcp/issues/828)
+     [#828](https://github.com/aavarghese/knative-gcp/issues/828)
    - If not, check the controller logs and file a bug if necessary.

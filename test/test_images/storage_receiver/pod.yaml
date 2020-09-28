@@ -19,5 +19,5 @@ metadata:
 spec:
   containers:
     - name: storage_receiver
-      image: ko://github.com/google/knative-gcp/test/test_images/storage_receiver
+      image: ko://github.com/aavarghese/knative-gcp/test/test_images/storage_receiver
 

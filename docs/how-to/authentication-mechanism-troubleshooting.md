@@ -294,7 +294,7 @@ kubectl get deployment -n default
     resides.
 
 **_Note:_** For Workload Identity, there is a known issue
-[#759](https://github.com/google/knative-gcp/issues/759) for credential sync
+[#759](https://github.com/aavarghese/knative-gcp/issues/759) for credential sync
 delay (~1 min) in resources' underlying components. You'll probably encounter
 this issue, if you immediately send Events after you finish Workload Identity
 setup for a resource instance.

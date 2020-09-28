@@ -19,4 +19,4 @@ metadata:
 spec:
   containers:
     - name: auditlogs_receiver
-      image: ko://github.com/google/knative-gcp/test/test_images/auditlogs_receiver
+      image: ko://github.com/aavarghese/knative-gcp/test/test_images/auditlogs_receiver

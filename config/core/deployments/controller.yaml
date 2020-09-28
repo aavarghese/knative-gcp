@@ -36,8 +36,8 @@ spec:
       serviceAccountName: controller
       containers:
       - name: controller
-        image: ko://github.com/google/knative-gcp/cmd/controller
-        # TODO enable HA once https://github.com/google/knative-gcp/issues/1466 is fixed.
+        image: ko://github.com/aavarghese/knative-gcp/cmd/controller
+        # TODO enable HA once https://github.com/aavarghese/knative-gcp/issues/1466 is fixed.
         args:
           - "--disable-ha"
         imagePullPolicy: Always
@@ -45,9 +45,9 @@ spec:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /var/secrets/google/key.json
         - name: PUBSUB_RA_IMAGE
-          value: ko://github.com/google/knative-gcp/cmd/pubsub/receive_adapter
+          value: ko://github.com/aavarghese/knative-gcp/cmd/pubsub/receive_adapter
         - name: PUBSUB_PUBLISHER_IMAGE
-          value: ko://github.com/google/knative-gcp/cmd/pubsub/publisher
+          value: ko://github.com/aavarghese/knative-gcp/cmd/pubsub/publisher
         - name: SYSTEM_NAMESPACE
           valueFrom:
             fieldRef:
@@ -61,11 +61,11 @@ spec:
         - name: METRICS_DOMAIN
           value: cloud.google.com/events
         - name: BROKER_CELL_INGRESS_IMAGE
-          value: ko://github.com/google/knative-gcp/cmd/broker/ingress
+          value: ko://github.com/aavarghese/knative-gcp/cmd/broker/ingress
         - name: BROKER_CELL_FANOUT_IMAGE
-          value: ko://github.com/google/knative-gcp/cmd/broker/fanout
+          value: ko://github.com/aavarghese/knative-gcp/cmd/broker/fanout
         - name: BROKER_CELL_RETRY_IMAGE
-          value: ko://github.com/google/knative-gcp/cmd/broker/retry
+          value: ko://github.com/aavarghese/knative-gcp/cmd/broker/retry
         - name: INTERNAL_METRICS_ENABLED
           value: "false"
         volumeMounts:

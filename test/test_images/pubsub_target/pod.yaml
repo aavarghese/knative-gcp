@@ -19,5 +19,5 @@ metadata:
 spec:
   containers:
     - name: pubsub_target
-      image: ko://github.com/google/knative-gcp/test/test_images/pubsub_target
+      image: ko://github.com/aavarghese/knative-gcp/test/test_images/pubsub_target
 

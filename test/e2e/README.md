@@ -240,7 +240,7 @@ For images deployed in GCR, a docker tag is mandatory to avoid issues with using
 
 ```bash
 ./test/upload-test-images.sh ./test/test_images e2e
-sed -i 's@ko://knative.dev/eventing/test/test_images@ko://github.com/google/knative-gcp/vendor/knative.dev/eventing/test/test_images@g' vendor/knative.dev/eventing/test/test_images/*/*.yaml
+sed -i 's@ko://knative.dev/eventing/test/test_images@ko://github.com/aavarghese/knative-gcp/vendor/knative.dev/eventing/test/test_images@g' vendor/knative.dev/eventing/test/test_images/*/*.yaml
 ./test/upload-test-images.sh ./vendor/knative.dev/eventing/test/test_images/ e2e
 ```
 
@@ -248,7 +248,7 @@ To run the script for all end to end test images:
 
 ```bash
 ./test/upload-test-images.sh ./test/test_images
-sed -i 's@ko://knative.dev/eventing/test/test_images@ko://github.com/google/knative-gcp/vendor/knative.dev/eventing/test/test_images@g' vendor/knative.dev/eventing/test/test_images/*/*.yaml
+sed -i 's@ko://knative.dev/eventing/test/test_images@ko://github.com/aavarghese/knative-gcp/vendor/knative.dev/eventing/test/test_images@g' vendor/knative.dev/eventing/test/test_images/*/*.yaml
 ./test/upload-test-images.sh ./vendor/knative.dev/eventing/test/test_images/
 ```
 
@@ -288,7 +288,7 @@ dump.
 Add `CI=true`to the `go test` command.
 
 - The data plane pods logs dump are at
-  `$GOPATH/src/github.com/google/knative-gcp/test/e2e/artifacts/pod-logs` .
+  `$GOPATH/src/github.com/aavarghese/knative-gcp/test/e2e/artifacts/pod-logs` .
 
 For example:
 

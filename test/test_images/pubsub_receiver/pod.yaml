@@ -19,4 +19,4 @@ metadata:
 spec:
   containers:
     - name: pubsub_receiver
-      image: ko://github.com/google/knative-gcp/test/test_images/pubsub_receiver
+      image: ko://github.com/aavarghese/knative-gcp/test/test_images/pubsub_receiver

@@ -18,7 +18,7 @@ contributing to `Knative-GCP`. Also take a look at:
 ### Checkout your fork
 
 The Go tools require that you clone the repository to the
-`src/github.com/google/knative-gcp` directory in your
+`src/github.com/aavarghese/knative-gcp` directory in your
 [`GOPATH`](https://github.com/golang/go/wiki/SettingGOPATH).
 
 To check out this repository:
@@ -32,7 +32,7 @@ mkdir -p ${GOPATH}/src/github.com/google
 cd ${GOPATH}/src/github.com/google
 git clone git@github.com:${YOUR_GITHUB_USERNAME}/knative-gcp.git
 cd knative-gcp
-git remote add upstream https://github.com/google/knative-gcp.git
+git remote add upstream https://github.com/aavarghese/knative-gcp.git
 git remote set-url --push upstream no_push
 ```
 

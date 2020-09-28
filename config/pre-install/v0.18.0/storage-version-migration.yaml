@@ -36,7 +36,7 @@ spec:
         - name: migrate
           # This is the Go import path for the binary that is containerized
           # and substituted here.
-          image: ko://github.com/google/knative-gcp/vendor/knative.dev/pkg/apiextensions/storageversion/cmd/migrate
+          image: ko://github.com/aavarghese/knative-gcp/vendor/knative.dev/pkg/apiextensions/storageversion/cmd/migrate
           args:
             - "channels.messaging.cloud.google.com"
             - "cloudbuildsources.events.cloud.google.com"

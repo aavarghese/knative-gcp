@@ -19,6 +19,6 @@ metadata:
 spec:
   containers:
     - name: build_target
-      image: ko://github.com/google/knative-gcp/test/test_images/build_target
+      image: ko://github.com/aavarghese/knative-gcp/test/test_images/build_target
 
 

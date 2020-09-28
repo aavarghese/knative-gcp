@@ -32,7 +32,7 @@ spec:
       serviceAccountName: probe-helper
       containers:
         - name: probe-helper
-          image: ko://github.com/google/knative-gcp/test/test_images/probe_helper
+          image: ko://github.com/aavarghese/knative-gcp/test/test_images/probe_helper
           env:
             - name: K_SINK
               value: "http://default-brokercell-ingress.cloud-run-events.svc.cluster.local/cloud-run-events-probe/default"

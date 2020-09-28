@@ -61,8 +61,8 @@ export KO_DOCKER_REPO='gcr.io/my-gcloud-project-id'
    make knative-gcp work.
 
 1. Download the `knative-gcp` source code into
-   `$GOPATH/src/github.com/google/knative-gcp`. For development follow the
-   [fork instructions](https://github.com/google/knative-gcp/blob/master/DEVELOPMENT.md#checkout-your-fork).
+   `$GOPATH/src/github.com/aavarghese/knative-gcp`. For development follow the
+   [fork instructions](https://github.com/aavarghese/knative-gcp/blob/master/DEVELOPMENT.md#checkout-your-fork).
 
 ## Install the Knative-GCP Constructs
 
@@ -74,7 +74,7 @@ Enter the `knative-gcp` directory before running the following commands.
 ko apply -f ./config
 ```
 
-### Option 2: Install a [release](https://github.com/google/knative-gcp/releases).
+### Option 2: Install a [release](https://github.com/aavarghese/knative-gcp/releases).
 
 1. Pick a knative-gcp release version:
 
@@ -88,16 +88,16 @@ ko apply -f ./config
 
    ```shell
    kubectl apply --selector messaging.cloud.google.com/crd-install=true \
-   --filename https://github.com/google/knative-gcp/releases/download/${KGCP_VERSION}/cloud-run-events.yaml
+   --filename https://github.com/aavarghese/knative-gcp/releases/download/${KGCP_VERSION}/cloud-run-events.yaml
    kubectl apply --selector events.cloud.google.com/crd-install=true \
-   --filename https://github.com/google/knative-gcp/releases/download/${KGCP_VERSION}/cloud-run-events.yaml
+   --filename https://github.com/aavarghese/knative-gcp/releases/download/${KGCP_VERSION}/cloud-run-events.yaml
    ```
 
 1. To complete the install run the `kubectl apply` command again, this time
    without the `--selector` flags:
 
    ```shell
-   kubectl apply --filename https://github.com/google/knative-gcp/releases/download/${KGCP_VERSION}/cloud-run-events.yaml
+   kubectl apply --filename https://github.com/aavarghese/knative-gcp/releases/download/${KGCP_VERSION}/cloud-run-events.yaml
    ```
 
 ## Configure the Authentication Mechanism for GCP (the Control Plane)

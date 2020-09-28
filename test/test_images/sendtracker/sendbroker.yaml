@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: sendtracker
-        image: ko://github.com/google/knative-gcp/test/test_images/sendtracker
+        image: ko://github.com/aavarghese/knative-gcp/test/test_images/sendtracker
         env:
         - name: K_SINK
           value: "http://default-brokercell-ingress.cloud-run-events.svc.cluster.local/default/default"

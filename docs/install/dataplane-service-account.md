@@ -105,7 +105,7 @@ Plane:
   which is bound to the Google Cloud Service Account `cre-dataplane`. Remember
   to put this Kubernetes Service Account name as the `spec.serviceAccountName`
   when you create resources in the
-  [example](https://github.com/google/knative-gcp/tree/master/docs/examples).
+  [example](https://github.com/aavarghese/knative-gcp/tree/master/docs/examples).
 
 - **_Default scenario:_**
 
@@ -149,7 +149,7 @@ Plane:
   the Google Cloud Service Account `cre-dataplane`. Remember to put this
   Kubernetes Service Account name as the `spec.serviceAccountName` when you
   create resources in the
-  [example](https://github.com/google/knative-gcp/tree/master/docs/examples).
+  [example](https://github.com/aavarghese/knative-gcp/tree/master/docs/examples).
 
   Kubernetes Service Account `default-cre-dataplane` doesn't need to exist in a
   specific namespace. Once it is set in the ConfigMap `config-gcp-auth`， the

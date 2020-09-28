@@ -51,7 +51,7 @@ PUBSUBAPICOPY=(
 chmod +x "${CODEGEN_PKG}"/generate-groups.sh
 # Only deepcopy the Duck types, as they are not real resources.
 "${CODEGEN_PKG}"/generate-groups.sh "deepcopy" \
-  github.com/google/knative-gcp/pkg/client github.com/google/knative-gcp/pkg/apis \
+  github.com/aavarghese/knative-gcp/pkg/client github.com/aavarghese/knative-gcp/pkg/apis \
   "duck:v1alpha1 duck:v1beta1 duck:v1" \
   --go-header-file "${REPO_ROOT_DIR}"/hack/boilerplate/boilerplate.go.txt
 
@@ -60,14 +60,14 @@ chmod +x "${CODEGEN_PKG}"/generate-groups.sh
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 "${CODEGEN_PKG}"/generate-groups.sh "deepcopy,client,informer,lister" \
-  github.com/google/knative-gcp/pkg/client github.com/google/knative-gcp/pkg/apis \
+  github.com/aavarghese/knative-gcp/pkg/client github.com/aavarghese/knative-gcp/pkg/apis \
   "messaging:v1alpha1 messaging:v1beta1 events:v1alpha1 events:v1beta1 events:v1 broker:v1beta1 intevents:v1alpha1 intevents:v1beta1 intevents:v1" \
   --go-header-file "${REPO_ROOT_DIR}"/hack/boilerplate/boilerplate.go.txt
 
 # Knative Injection
 chmod +x "${KNATIVE_CODEGEN_PKG}"/hack/generate-knative.sh
 "${KNATIVE_CODEGEN_PKG}"/hack/generate-knative.sh "injection" \
-  github.com/google/knative-gcp/pkg/client github.com/google/knative-gcp/pkg/apis \
+  github.com/aavarghese/knative-gcp/pkg/client github.com/aavarghese/knative-gcp/pkg/apis \
   "messaging:v1alpha1 messaging:v1beta1 events:v1alpha1 events:v1beta1 events:v1 duck:v1alpha1 duck:v1beta1 duck:v1 broker:v1beta1 intevents:v1alpha1 intevents:v1beta1 intevents:v1" \
   --go-header-file "${REPO_ROOT_DIR}"/hack/boilerplate/boilerplate.go.txt
 
@@ -75,12 +75,12 @@ chmod +x "${KNATIVE_CODEGEN_PKG}"/hack/generate-knative.sh
 ${GOPATH}/bin/deepcopy-gen \
   -O zz_generated.deepcopy \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt \
-  -i github.com/google/knative-gcp/pkg/apis/configs/gcpauth \
-  -i github.com/google/knative-gcp/pkg/apis/configs/broker \
-  -i github.com/google/knative-gcp/pkg/apis/configs/dataresidency \
+  -i github.com/aavarghese/knative-gcp/pkg/apis/configs/gcpauth \
+  -i github.com/aavarghese/knative-gcp/pkg/apis/configs/broker \
+  -i github.com/aavarghese/knative-gcp/pkg/apis/configs/dataresidency \
 
 # TODO(yolocs): generate autoscaling v2beta2 in knative/pkg.
-OUTPUT_PKG="github.com/google/knative-gcp/pkg/client/injection/kube" \
+OUTPUT_PKG="github.com/aavarghese/knative-gcp/pkg/client/injection/kube" \
 VERSIONED_CLIENTSET_PKG="k8s.io/client-go/kubernetes" \
 EXTERNAL_INFORMER_PKG="k8s.io/client-go/informers" \
 "${KNATIVE_CODEGEN_PKG}"/hack/generate-knative.sh "injection" \
