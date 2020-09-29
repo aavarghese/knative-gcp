@@ -20,10 +20,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/aavarghese/knative-gcp/pkg/apis/duck"
+	"github.com/aavarghese/knative-gcp/pkg/apis/intevents"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/google/knative-gcp/pkg/apis/duck"
-	"github.com/google/knative-gcp/pkg/apis/intevents"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"

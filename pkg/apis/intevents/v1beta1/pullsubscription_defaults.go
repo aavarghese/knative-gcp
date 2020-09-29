@@ -21,8 +21,8 @@ import (
 
 	"knative.dev/pkg/apis"
 
-	"github.com/google/knative-gcp/pkg/apis/duck"
-	"github.com/google/knative-gcp/pkg/apis/intevents"
+	"github.com/aavarghese/knative-gcp/pkg/apis/duck"
+	"github.com/aavarghese/knative-gcp/pkg/apis/intevents"
 	"knative.dev/pkg/ptr"
 )
 

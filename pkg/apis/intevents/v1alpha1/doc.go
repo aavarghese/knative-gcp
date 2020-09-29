@@ -14,12 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Api versions allow the api contract for a resource to be changed while keeping
-// backward compatibility by supporting multiple concurrent versions
-// of the same resource.
-
-// Package v1alpha1 defines internal types in
-// internal.events.cloud.google.com/v1alpha1 for use by other resources.
+// Package v1alpha1 contains API Schema definitions for the sources v1alpha1 API group
 // +k8s:deepcopy-gen=package
-// +groupName=internal.events.cloud.google.com
+// +groupName=sources.knative.dev
 package v1alpha1

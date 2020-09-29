@@ -22,9 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"knative.dev/pkg/apis"
 
+	"github.com/aavarghese/knative-gcp/pkg/apis/duck/v1beta1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/google/knative-gcp/pkg/apis/duck/v1beta1"
 )
 
 func TestTopicGetGroupVersionKind(t *testing.T) {

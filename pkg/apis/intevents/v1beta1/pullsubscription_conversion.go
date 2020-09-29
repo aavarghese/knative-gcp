@@ -19,8 +19,8 @@ package v1beta1
 import (
 	"context"
 
-	"github.com/google/knative-gcp/pkg/apis/convert"
-	v1 "github.com/google/knative-gcp/pkg/apis/intevents/v1"
+	"github.com/aavarghese/knative-gcp/pkg/apis/convert"
+	v1 "github.com/aavarghese/knative-gcp/pkg/apis/intevents/v1"
 
 	"knative.dev/pkg/apis"
 )

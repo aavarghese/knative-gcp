@@ -27,7 +27,7 @@ import (
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 	"knative.dev/pkg/webhook/resourcesemantics"
 
-	"github.com/google/knative-gcp/pkg/apis/duck/v1beta1"
+	"github.com/aavarghese/knative-gcp/pkg/apis/duck/v1beta1"
 )
 
 // +genclient

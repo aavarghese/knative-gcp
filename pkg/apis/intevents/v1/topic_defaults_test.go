@@ -20,8 +20,8 @@ import (
 	"context"
 	"testing"
 
+	gcpauthtesthelper "github.com/aavarghese/knative-gcp/pkg/apis/configs/gcpauth/testhelper"
 	"github.com/google/go-cmp/cmp"
-	gcpauthtesthelper "github.com/google/knative-gcp/pkg/apis/configs/gcpauth/testhelper"
 	corev1 "k8s.io/api/core/v1"
 )
 

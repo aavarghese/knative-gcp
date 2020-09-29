@@ -19,7 +19,7 @@ package v1
 import (
 	"context"
 
-	"github.com/google/knative-gcp/pkg/apis/duck"
+	"github.com/aavarghese/knative-gcp/pkg/apis/duck"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"

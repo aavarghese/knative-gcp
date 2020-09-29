@@ -24,10 +24,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/ptr"
 
+	gcpauthtesthelper "github.com/aavarghese/knative-gcp/pkg/apis/configs/gcpauth/testhelper"
+	duckv1 "github.com/aavarghese/knative-gcp/pkg/apis/duck/v1"
+	"github.com/aavarghese/knative-gcp/pkg/apis/intevents"
 	"github.com/google/go-cmp/cmp"
-	gcpauthtesthelper "github.com/google/knative-gcp/pkg/apis/configs/gcpauth/testhelper"
-	duckv1 "github.com/google/knative-gcp/pkg/apis/duck/v1"
-	"github.com/google/knative-gcp/pkg/apis/intevents"
 )
 
 func TestPullSubscriptionDefaults(t *testing.T) {

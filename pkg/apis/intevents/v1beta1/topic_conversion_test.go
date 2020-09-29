@@ -21,9 +21,9 @@ import (
 	"net/url"
 	"testing"
 
+	v1 "github.com/aavarghese/knative-gcp/pkg/apis/intevents/v1"
+	gcptesting "github.com/aavarghese/knative-gcp/pkg/testing"
 	"github.com/google/go-cmp/cmp"
-	v1 "github.com/google/knative-gcp/pkg/apis/intevents/v1"
-	gcptesting "github.com/google/knative-gcp/pkg/testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"

@@ -21,12 +21,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/knative-gcp/pkg/apis/duck"
-	metadatatesting "github.com/google/knative-gcp/pkg/gclient/metadata/testing"
+	"github.com/aavarghese/knative-gcp/pkg/apis/duck"
+	metadatatesting "github.com/aavarghese/knative-gcp/pkg/gclient/metadata/testing"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/ptr"
 
-	"github.com/google/knative-gcp/pkg/apis/duck/v1beta1"
+	"github.com/aavarghese/knative-gcp/pkg/apis/duck/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/webhook/resourcesemantics"

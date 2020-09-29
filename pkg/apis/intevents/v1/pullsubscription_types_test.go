@@ -24,10 +24,10 @@ import (
 	"knative.dev/pkg/apis"
 	"knative.dev/pkg/ptr"
 
+	v1 "github.com/aavarghese/knative-gcp/pkg/apis/duck/v1"
+	"github.com/aavarghese/knative-gcp/pkg/apis/intevents"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	v1 "github.com/google/knative-gcp/pkg/apis/duck/v1"
-	"github.com/google/knative-gcp/pkg/apis/intevents"
 )
 
 func TestPullSubscriptionGetGroupVersionKind(t *testing.T) {
